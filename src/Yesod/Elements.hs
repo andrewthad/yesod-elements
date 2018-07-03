@@ -1,3 +1,5 @@
+{-# language OverloadedStrings #-}
+
 {-# OPTIONS_GHC -Wall #-}
 
 module Yesod.Elements
@@ -285,333 +287,345 @@ module Yesod.Elements
   , liftLeaf
   ) where
 
-import Yesod.Core.Types (Body(..),GWData(..),WidgetT(..))
+import Yesod.Core (toWidget)
+import Yesod.Core.Types (Body(..),GWData(..),WidgetFor(..),WidgetData(..))
 import Text.Blaze.Html (Html,Attribute,AttributeValue)
 import Data.Foldable
+import Data.IORef (modifyIORef)
+import Data.String (fromString)
+import Data.Monoid
+import qualified Text.Blaze.Renderer.Utf8 as BLZU
+import qualified Text.Blaze.Renderer.Text as BLZT
+import qualified Text.Blaze.Renderer.String as BLZS
+import qualified Data.ByteString.Lazy as LB
+import qualified Data.ByteString.Builder as BB
+import qualified Data.Text.Lazy.Builder as TB
+import qualified Data.Text.Lazy as LT
+import qualified Text.Blaze.Internal as BI
 import qualified Text.Blaze.Html5 as H
 import qualified Text.Blaze.Html5.Attributes as HA
 
-a_ :: (Monad m, Foldable t) => t Attribute -> WidgetT site m a -> WidgetT site m a
-a_ = liftParent H.a
+a_ :: Foldable t => t Attribute -> WidgetFor site a -> WidgetFor site a
+a_ = liftParent "<a" "</a>"
 
-abbr_ :: (Monad m, Foldable t) => t Attribute -> WidgetT site m a -> WidgetT site m a
-abbr_ = liftParent H.abbr
+abbr_ :: Foldable t => t Attribute -> WidgetFor site a -> WidgetFor site a
+abbr_ = liftParent "<abbr" "</abbr>"
 
-address_ :: (Monad m, Foldable t) => t Attribute -> WidgetT site m a -> WidgetT site m a
-address_ = liftParent H.address
+address_ :: Foldable t => t Attribute -> WidgetFor site a -> WidgetFor site a
+address_ = liftParent "<address" "</address>"
 
-article_ :: (Monad m, Foldable t) => t Attribute -> WidgetT site m a -> WidgetT site m a
-article_ = liftParent H.article
+article_ :: Foldable t => t Attribute -> WidgetFor site a -> WidgetFor site a
+article_ = liftParent "<article" "</article>"
 
-aside_ :: (Monad m, Foldable t) => t Attribute -> WidgetT site m a -> WidgetT site m a
-aside_ = liftParent H.aside
+aside_ :: Foldable t => t Attribute -> WidgetFor site a -> WidgetFor site a
+aside_ = liftParent "<aside" "</aside>"
 
-audio_ :: (Monad m, Foldable t) => t Attribute -> WidgetT site m a -> WidgetT site m a
-audio_ = liftParent H.audio
+audio_ :: Foldable t => t Attribute -> WidgetFor site a -> WidgetFor site a
+audio_ = liftParent "<audio" "</audio>"
 
-b_ :: (Monad m, Foldable t) => t Attribute -> WidgetT site m a -> WidgetT site m a
-b_ = liftParent H.b
+b_ :: Foldable t => t Attribute -> WidgetFor site a -> WidgetFor site a
+b_ = liftParent "<b" "</b>"
 
-bdo_ :: (Monad m, Foldable t) => t Attribute -> WidgetT site m a -> WidgetT site m a
-bdo_ = liftParent H.bdo
+bdo_ :: Foldable t => t Attribute -> WidgetFor site a -> WidgetFor site a
+bdo_ = liftParent "<bdo" "</bdo>"
 
-blockquote_ :: (Monad m, Foldable t) => t Attribute -> WidgetT site m a -> WidgetT site m a
-blockquote_ = liftParent H.blockquote
+blockquote_ :: Foldable t => t Attribute -> WidgetFor site a -> WidgetFor site a
+blockquote_ = liftParent "<blockquote" "</blockquote>"
 
-body_ :: (Monad m, Foldable t) => t Attribute -> WidgetT site m a -> WidgetT site m a
-body_ = liftParent H.body
+body_ :: Foldable t => t Attribute -> WidgetFor site a -> WidgetFor site a
+body_ = liftParent "<body" "</body>"
 
-button_ :: (Monad m, Foldable t) => t Attribute -> WidgetT site m a -> WidgetT site m a
-button_ = liftParent H.button
+button_ :: Foldable t => t Attribute -> WidgetFor site a -> WidgetFor site a
+button_ = liftParent "<button" "</button>"
 
-canvas_ :: (Monad m, Foldable t) => t Attribute -> WidgetT site m a -> WidgetT site m a
-canvas_ = liftParent H.canvas
+canvas_ :: Foldable t => t Attribute -> WidgetFor site a -> WidgetFor site a
+canvas_ = liftParent "<canvas" "</canvas>"
 
-caption_ :: (Monad m, Foldable t) => t Attribute -> WidgetT site m a -> WidgetT site m a
-caption_ = liftParent H.caption
+caption_ :: Foldable t => t Attribute -> WidgetFor site a -> WidgetFor site a
+caption_ = liftParent "<caption" "</caption>"
 
-cite_ :: (Monad m, Foldable t) => t Attribute -> WidgetT site m a -> WidgetT site m a
-cite_ = liftParent H.cite
+cite_ :: Foldable t => t Attribute -> WidgetFor site a -> WidgetFor site a
+cite_ = liftParent "<cite" "</cite>"
 
-code_ :: (Monad m, Foldable t) => t Attribute -> WidgetT site m a -> WidgetT site m a
-code_ = liftParent H.code
+code_ :: Foldable t => t Attribute -> WidgetFor site a -> WidgetFor site a
+code_ = liftParent "<code" "</code>"
 
-colgroup_ :: (Monad m, Foldable t) => t Attribute -> WidgetT site m a -> WidgetT site m a
-colgroup_ = liftParent H.colgroup
+colgroup_ :: Foldable t => t Attribute -> WidgetFor site a -> WidgetFor site a
+colgroup_ = liftParent "<colgroup" "</colgroup>"
 
-command_ :: (Monad m, Foldable t) => t Attribute -> WidgetT site m a -> WidgetT site m a
-command_ = liftParent H.command
+command_ :: Foldable t => t Attribute -> WidgetFor site a -> WidgetFor site a
+command_ = liftParent "<command" "</command>"
 
-datalist_ :: (Monad m, Foldable t) => t Attribute -> WidgetT site m a -> WidgetT site m a
-datalist_ = liftParent H.datalist
+datalist_ :: Foldable t => t Attribute -> WidgetFor site a -> WidgetFor site a
+datalist_ = liftParent "<datalist" "</datalist>"
 
-dd_ :: (Monad m, Foldable t) => t Attribute -> WidgetT site m a -> WidgetT site m a
-dd_ = liftParent H.dd
+dd_ :: Foldable t => t Attribute -> WidgetFor site a -> WidgetFor site a
+dd_ = liftParent "<dd" "</dd>"
 
-del_ :: (Monad m, Foldable t) => t Attribute -> WidgetT site m a -> WidgetT site m a
-del_ = liftParent H.del
+del_ :: Foldable t => t Attribute -> WidgetFor site a -> WidgetFor site a
+del_ = liftParent "<del" "</del>"
 
-details_ :: (Monad m, Foldable t) => t Attribute -> WidgetT site m a -> WidgetT site m a
-details_ = liftParent H.details
+details_ :: Foldable t => t Attribute -> WidgetFor site a -> WidgetFor site a
+details_ = liftParent "<details" "</details>"
 
-dfn_ :: (Monad m, Foldable t) => t Attribute -> WidgetT site m a -> WidgetT site m a
-dfn_ = liftParent H.dfn
+dfn_ :: Foldable t => t Attribute -> WidgetFor site a -> WidgetFor site a
+dfn_ = liftParent "<dfn" "</dfn>"
 
-div_ :: (Monad m, Foldable t) => t Attribute -> WidgetT site m a -> WidgetT site m a
-div_ = liftParent H.div
+div_ :: Foldable t => t Attribute -> WidgetFor site a -> WidgetFor site a
+div_ = liftParent "<div" "</div>"
 
-dl_ :: (Monad m, Foldable t) => t Attribute -> WidgetT site m a -> WidgetT site m a
-dl_ = liftParent H.dl
+dl_ :: Foldable t => t Attribute -> WidgetFor site a -> WidgetFor site a
+dl_ = liftParent "<dl" "</dl>"
 
-dt_ :: (Monad m, Foldable t) => t Attribute -> WidgetT site m a -> WidgetT site m a
-dt_ = liftParent H.dt
+dt_ :: Foldable t => t Attribute -> WidgetFor site a -> WidgetFor site a
+dt_ = liftParent "<dt" "</dt>"
 
-em_ :: (Monad m, Foldable t) => t Attribute -> WidgetT site m a -> WidgetT site m a
-em_ = liftParent H.em
+em_ :: Foldable t => t Attribute -> WidgetFor site a -> WidgetFor site a
+em_ = liftParent "<em" "</em>"
 
-fieldset_ :: (Monad m, Foldable t) => t Attribute -> WidgetT site m a -> WidgetT site m a
-fieldset_ = liftParent H.fieldset
+fieldset_ :: Foldable t => t Attribute -> WidgetFor site a -> WidgetFor site a
+fieldset_ = liftParent "<fieldset" "</fieldset>"
 
-figcaption_ :: (Monad m, Foldable t) => t Attribute -> WidgetT site m a -> WidgetT site m a
-figcaption_ = liftParent H.figcaption
+figcaption_ :: Foldable t => t Attribute -> WidgetFor site a -> WidgetFor site a
+figcaption_ = liftParent "<figcaption" "</figcaption>"
 
-figure_ :: (Monad m, Foldable t) => t Attribute -> WidgetT site m a -> WidgetT site m a
-figure_ = liftParent H.figure
+figure_ :: Foldable t => t Attribute -> WidgetFor site a -> WidgetFor site a
+figure_ = liftParent "<figure" "</figure>"
 
-footer_ :: (Monad m, Foldable t) => t Attribute -> WidgetT site m a -> WidgetT site m a
-footer_ = liftParent H.footer
+footer_ :: Foldable t => t Attribute -> WidgetFor site a -> WidgetFor site a
+footer_ = liftParent "<footer" "</footer>"
 
-form_ :: (Monad m, Foldable t) => t Attribute -> WidgetT site m a -> WidgetT site m a
-form_ = liftParent H.form
+form_ :: Foldable t => t Attribute -> WidgetFor site a -> WidgetFor site a
+form_ = liftParent "<form" "</form>"
 
-h1_ :: (Monad m, Foldable t) => t Attribute -> WidgetT site m a -> WidgetT site m a
-h1_ = liftParent H.h1
+h1_ :: Foldable t => t Attribute -> WidgetFor site a -> WidgetFor site a
+h1_ = liftParent "<h1" "</h1>"
 
-h2_ :: (Monad m, Foldable t) => t Attribute -> WidgetT site m a -> WidgetT site m a
-h2_ = liftParent H.h2
+h2_ :: Foldable t => t Attribute -> WidgetFor site a -> WidgetFor site a
+h2_ = liftParent "<h2" "</h2>"
 
-h3_ :: (Monad m, Foldable t) => t Attribute -> WidgetT site m a -> WidgetT site m a
-h3_ = liftParent H.h3
+h3_ :: Foldable t => t Attribute -> WidgetFor site a -> WidgetFor site a
+h3_ = liftParent "<h3" "</h3>"
 
-h4_ :: (Monad m, Foldable t) => t Attribute -> WidgetT site m a -> WidgetT site m a
-h4_ = liftParent H.h4
+h4_ :: Foldable t => t Attribute -> WidgetFor site a -> WidgetFor site a
+h4_ = liftParent "<h4" "</h4>"
 
-h5_ :: (Monad m, Foldable t) => t Attribute -> WidgetT site m a -> WidgetT site m a
-h5_ = liftParent H.h5
+h5_ :: Foldable t => t Attribute -> WidgetFor site a -> WidgetFor site a
+h5_ = liftParent "<h5" "</h5>"
 
-h6_ :: (Monad m, Foldable t) => t Attribute -> WidgetT site m a -> WidgetT site m a
-h6_ = liftParent H.h6
+h6_ :: Foldable t => t Attribute -> WidgetFor site a -> WidgetFor site a
+h6_ = liftParent "<h6" "</h6>"
 
-head_ :: (Monad m, Foldable t) => t Attribute -> WidgetT site m a -> WidgetT site m a
-head_ = liftParent H.head
+head_ :: Foldable t => t Attribute -> WidgetFor site a -> WidgetFor site a
+head_ = liftParent "<head" "</head>"
 
-header_ :: (Monad m, Foldable t) => t Attribute -> WidgetT site m a -> WidgetT site m a
-header_ = liftParent H.header
+header_ :: Foldable t => t Attribute -> WidgetFor site a -> WidgetFor site a
+header_ = liftParent "<header" "</header>"
 
-hgroup_ :: (Monad m, Foldable t) => t Attribute -> WidgetT site m a -> WidgetT site m a
-hgroup_ = liftParent H.hgroup
+hgroup_ :: Foldable t => t Attribute -> WidgetFor site a -> WidgetFor site a
+hgroup_ = liftParent "<hgroup" "</hgroup>"
 
-html_ :: (Monad m, Foldable t) => t Attribute -> WidgetT site m a -> WidgetT site m a
-html_ = liftParent H.html
+html_ :: Foldable t => t Attribute -> WidgetFor site a -> WidgetFor site a
+html_ = liftParent "<html" "</html>"
 
-i_ :: (Monad m, Foldable t) => t Attribute -> WidgetT site m a -> WidgetT site m a
-i_ = liftParent H.i
+i_ :: Foldable t => t Attribute -> WidgetFor site a -> WidgetFor site a
+i_ = liftParent "<i" "</i>"
 
-iframe_ :: (Monad m, Foldable t) => t Attribute -> WidgetT site m a -> WidgetT site m a
-iframe_ = liftParent H.iframe
+iframe_ :: Foldable t => t Attribute -> WidgetFor site a -> WidgetFor site a
+iframe_ = liftParent "<iframe" "</iframe>"
 
-ins_ :: (Monad m, Foldable t) => t Attribute -> WidgetT site m a -> WidgetT site m a
-ins_ = liftParent H.ins
+ins_ :: Foldable t => t Attribute -> WidgetFor site a -> WidgetFor site a
+ins_ = liftParent "<ins" "</ins>"
 
-kbd_ :: (Monad m, Foldable t) => t Attribute -> WidgetT site m a -> WidgetT site m a
-kbd_ = liftParent H.kbd
+kbd_ :: Foldable t => t Attribute -> WidgetFor site a -> WidgetFor site a
+kbd_ = liftParent "<kbd" "</kbd>"
 
-label_ :: (Monad m, Foldable t) => t Attribute -> WidgetT site m a -> WidgetT site m a
-label_ = liftParent H.label
+label_ :: Foldable t => t Attribute -> WidgetFor site a -> WidgetFor site a
+label_ = liftParent "<label" "</label>"
 
-legend_ :: (Monad m, Foldable t) => t Attribute -> WidgetT site m a -> WidgetT site m a
-legend_ = liftParent H.legend
+legend_ :: Foldable t => t Attribute -> WidgetFor site a -> WidgetFor site a
+legend_ = liftParent "<legend" "</legend>"
 
-li_ :: (Monad m, Foldable t) => t Attribute -> WidgetT site m a -> WidgetT site m a
-li_ = liftParent H.li
+li_ :: Foldable t => t Attribute -> WidgetFor site a -> WidgetFor site a
+li_ = liftParent "<li" "</li>"
 
-main_ :: (Monad m, Foldable t) => t Attribute -> WidgetT site m a -> WidgetT site m a
-main_ = liftParent H.main
+main_ :: Foldable t => t Attribute -> WidgetFor site a -> WidgetFor site a
+main_ = liftParent "<main" "</main>"
 
-map_ :: (Monad m, Foldable t) => t Attribute -> WidgetT site m a -> WidgetT site m a
-map_ = liftParent H.map
+map_ :: Foldable t => t Attribute -> WidgetFor site a -> WidgetFor site a
+map_ = liftParent "<map" "</map>"
 
-mark_ :: (Monad m, Foldable t) => t Attribute -> WidgetT site m a -> WidgetT site m a
-mark_ = liftParent H.mark
+mark_ :: Foldable t => t Attribute -> WidgetFor site a -> WidgetFor site a
+mark_ = liftParent "<mark" "</mark>"
 
-menu_ :: (Monad m, Foldable t) => t Attribute -> WidgetT site m a -> WidgetT site m a
-menu_ = liftParent H.menu
+menu_ :: Foldable t => t Attribute -> WidgetFor site a -> WidgetFor site a
+menu_ = liftParent "<menu" "</menu>"
 
-meter_ :: (Monad m, Foldable t) => t Attribute -> WidgetT site m a -> WidgetT site m a
-meter_ = liftParent H.meter
+meter_ :: Foldable t => t Attribute -> WidgetFor site a -> WidgetFor site a
+meter_ = liftParent "<meter" "</meter>"
 
-nav_ :: (Monad m, Foldable t) => t Attribute -> WidgetT site m a -> WidgetT site m a
-nav_ = liftParent H.nav
+nav_ :: Foldable t => t Attribute -> WidgetFor site a -> WidgetFor site a
+nav_ = liftParent "<nav" "</nav>"
 
-noscript_ :: (Monad m, Foldable t) => t Attribute -> WidgetT site m a -> WidgetT site m a
-noscript_ = liftParent H.noscript
+noscript_ :: Foldable t => t Attribute -> WidgetFor site a -> WidgetFor site a
+noscript_ = liftParent "<noscript" "</noscript>"
 
-object_ :: (Monad m, Foldable t) => t Attribute -> WidgetT site m a -> WidgetT site m a
-object_ = liftParent H.object
+object_ :: Foldable t => t Attribute -> WidgetFor site a -> WidgetFor site a
+object_ = liftParent "<object" "</object>"
 
-ol_ :: (Monad m, Foldable t) => t Attribute -> WidgetT site m a -> WidgetT site m a
-ol_ = liftParent H.ol
+ol_ :: Foldable t => t Attribute -> WidgetFor site a -> WidgetFor site a
+ol_ = liftParent "<ol" "</ol>"
 
-optgroup_ :: (Monad m, Foldable t) => t Attribute -> WidgetT site m a -> WidgetT site m a
-optgroup_ = liftParent H.optgroup
+optgroup_ :: Foldable t => t Attribute -> WidgetFor site a -> WidgetFor site a
+optgroup_ = liftParent "<optgroup" "</optgroup>"
 
-option_ :: (Monad m, Foldable t) => t Attribute -> WidgetT site m a -> WidgetT site m a
-option_ = liftParent H.option
+option_ :: Foldable t => t Attribute -> WidgetFor site a -> WidgetFor site a
+option_ = liftParent "<option" "</option>"
 
-output_ :: (Monad m, Foldable t) => t Attribute -> WidgetT site m a -> WidgetT site m a
-output_ = liftParent H.output
+output_ :: Foldable t => t Attribute -> WidgetFor site a -> WidgetFor site a
+output_ = liftParent "<output" "</output>"
 
-p_ :: (Monad m, Foldable t) => t Attribute -> WidgetT site m a -> WidgetT site m a
-p_ = liftParent H.p
+p_ :: Foldable t => t Attribute -> WidgetFor site a -> WidgetFor site a
+p_ = liftParent "<p" "</p>"
 
-pre_ :: (Monad m, Foldable t) => t Attribute -> WidgetT site m a -> WidgetT site m a
-pre_ = liftParent H.pre
+pre_ :: Foldable t => t Attribute -> WidgetFor site a -> WidgetFor site a
+pre_ = liftParent "<pre" "</pre>"
 
-progress_ :: (Monad m, Foldable t) => t Attribute -> WidgetT site m a -> WidgetT site m a
-progress_ = liftParent H.progress
+progress_ :: Foldable t => t Attribute -> WidgetFor site a -> WidgetFor site a
+progress_ = liftParent "<progress" "</progress>"
 
-q_ :: (Monad m, Foldable t) => t Attribute -> WidgetT site m a -> WidgetT site m a
-q_ = liftParent H.q
+q_ :: Foldable t => t Attribute -> WidgetFor site a -> WidgetFor site a
+q_ = liftParent "<q" "</q>"
 
-rp_ :: (Monad m, Foldable t) => t Attribute -> WidgetT site m a -> WidgetT site m a
-rp_ = liftParent H.rp
+rp_ :: Foldable t => t Attribute -> WidgetFor site a -> WidgetFor site a
+rp_ = liftParent "<rp" "</rp>"
 
-rt_ :: (Monad m, Foldable t) => t Attribute -> WidgetT site m a -> WidgetT site m a
-rt_ = liftParent H.rt
+rt_ :: Foldable t => t Attribute -> WidgetFor site a -> WidgetFor site a
+rt_ = liftParent "<rt" "</rt>"
 
-ruby_ :: (Monad m, Foldable t) => t Attribute -> WidgetT site m a -> WidgetT site m a
-ruby_ = liftParent H.ruby
+ruby_ :: Foldable t => t Attribute -> WidgetFor site a -> WidgetFor site a
+ruby_ = liftParent "<ruby" "</ruby>"
 
-samp_ :: (Monad m, Foldable t) => t Attribute -> WidgetT site m a -> WidgetT site m a
-samp_ = liftParent H.samp
+samp_ :: Foldable t => t Attribute -> WidgetFor site a -> WidgetFor site a
+samp_ = liftParent "<samp" "</samp>"
 
-script_ :: (Monad m, Foldable t) => t Attribute -> WidgetT site m a -> WidgetT site m a
-script_ = liftParent H.script
+script_ :: Foldable t => t Attribute -> WidgetFor site a -> WidgetFor site a
+script_ = liftParent "<script" "</script>"
 
-section_ :: (Monad m, Foldable t) => t Attribute -> WidgetT site m a -> WidgetT site m a
-section_ = liftParent H.section
+section_ :: Foldable t => t Attribute -> WidgetFor site a -> WidgetFor site a
+section_ = liftParent "<section" "</section>"
 
-select_ :: (Monad m, Foldable t) => t Attribute -> WidgetT site m a -> WidgetT site m a
-select_ = liftParent H.select
+select_ :: Foldable t => t Attribute -> WidgetFor site a -> WidgetFor site a
+select_ = liftParent "<select" "</select>"
 
-small_ :: (Monad m, Foldable t) => t Attribute -> WidgetT site m a -> WidgetT site m a
-small_ = liftParent H.small
+small_ :: Foldable t => t Attribute -> WidgetFor site a -> WidgetFor site a
+small_ = liftParent "<small" "</small>"
 
-span_ :: (Monad m, Foldable t) => t Attribute -> WidgetT site m a -> WidgetT site m a
-span_ = liftParent H.span
+span_ :: Foldable t => t Attribute -> WidgetFor site a -> WidgetFor site a
+span_ = liftParent "<span" "</span>"
 
-strong_ :: (Monad m, Foldable t) => t Attribute -> WidgetT site m a -> WidgetT site m a
-strong_ = liftParent H.strong
+strong_ :: Foldable t => t Attribute -> WidgetFor site a -> WidgetFor site a
+strong_ = liftParent "<strong" "</strong>"
 
-style_ :: (Monad m, Foldable t) => t Attribute -> WidgetT site m a -> WidgetT site m a
-style_ = liftParent H.style
+style_ :: Foldable t => t Attribute -> WidgetFor site a -> WidgetFor site a
+style_ = liftParent "<style" "</style>"
 
-sub_ :: (Monad m, Foldable t) => t Attribute -> WidgetT site m a -> WidgetT site m a
-sub_ = liftParent H.sub
+sub_ :: Foldable t => t Attribute -> WidgetFor site a -> WidgetFor site a
+sub_ = liftParent "<sub" "</sub>"
 
-summary_ :: (Monad m, Foldable t) => t Attribute -> WidgetT site m a -> WidgetT site m a
-summary_ = liftParent H.summary
+summary_ :: Foldable t => t Attribute -> WidgetFor site a -> WidgetFor site a
+summary_ = liftParent "<summary" "</summary>"
 
-sup_ :: (Monad m, Foldable t) => t Attribute -> WidgetT site m a -> WidgetT site m a
-sup_ = liftParent H.sup
+sup_ :: Foldable t => t Attribute -> WidgetFor site a -> WidgetFor site a
+sup_ = liftParent "<sup" "</sup>"
 
-table_ :: (Monad m, Foldable t) => t Attribute -> WidgetT site m a -> WidgetT site m a
-table_ = liftParent H.table
+table_ :: Foldable t => t Attribute -> WidgetFor site a -> WidgetFor site a
+table_ = liftParent "<table" "</table>"
 
-tbody_ :: (Monad m, Foldable t) => t Attribute -> WidgetT site m a -> WidgetT site m a
-tbody_ = liftParent H.tbody
+tbody_ :: Foldable t => t Attribute -> WidgetFor site a -> WidgetFor site a
+tbody_ = liftParent "<tbody" "</tbody>"
 
-td_ :: (Monad m, Foldable t) => t Attribute -> WidgetT site m a -> WidgetT site m a
-td_ = liftParent H.td
+td_ :: Foldable t => t Attribute -> WidgetFor site a -> WidgetFor site a
+td_ = liftParent "<td" "</td>"
 
-textarea_ :: (Monad m, Foldable t) => t Attribute -> WidgetT site m a -> WidgetT site m a
-textarea_ = liftParent H.textarea
+textarea_ :: Foldable t => t Attribute -> WidgetFor site a -> WidgetFor site a
+textarea_ = liftParent "<textarea" "</textarea>"
 
-tfoot_ :: (Monad m, Foldable t) => t Attribute -> WidgetT site m a -> WidgetT site m a
-tfoot_ = liftParent H.tfoot
+tfoot_ :: Foldable t => t Attribute -> WidgetFor site a -> WidgetFor site a
+tfoot_ = liftParent "<tfoot" "</tfoot>"
 
-th_ :: (Monad m, Foldable t) => t Attribute -> WidgetT site m a -> WidgetT site m a
-th_ = liftParent H.th
+th_ :: Foldable t => t Attribute -> WidgetFor site a -> WidgetFor site a
+th_ = liftParent "<th" "</th>"
 
-thead_ :: (Monad m, Foldable t) => t Attribute -> WidgetT site m a -> WidgetT site m a
-thead_ = liftParent H.thead
+thead_ :: Foldable t => t Attribute -> WidgetFor site a -> WidgetFor site a
+thead_ = liftParent "<thead" "</thead>"
 
-time_ :: (Monad m, Foldable t) => t Attribute -> WidgetT site m a -> WidgetT site m a
-time_ = liftParent H.time
+time_ :: Foldable t => t Attribute -> WidgetFor site a -> WidgetFor site a
+time_ = liftParent "<time" "</time>"
 
-title_ :: (Monad m, Foldable t) => t Attribute -> WidgetT site m a -> WidgetT site m a
-title_ = liftParent H.title
+title_ :: Foldable t => t Attribute -> WidgetFor site a -> WidgetFor site a
+title_ = liftParent "<title" "</title>"
 
-tr_ :: (Monad m, Foldable t) => t Attribute -> WidgetT site m a -> WidgetT site m a
-tr_ = liftParent H.tr
+tr_ :: Foldable t => t Attribute -> WidgetFor site a -> WidgetFor site a
+tr_ = liftParent "<tr" "</tr>"
 
-ul_ :: (Monad m, Foldable t) => t Attribute -> WidgetT site m a -> WidgetT site m a
-ul_ = liftParent H.ul
+ul_ :: Foldable t => t Attribute -> WidgetFor site a -> WidgetFor site a
+ul_ = liftParent "<ul" "</ul>"
 
-var_ :: (Monad m, Foldable t) => t Attribute -> WidgetT site m a -> WidgetT site m a
-var_ = liftParent H.var
+var_ :: Foldable t => t Attribute -> WidgetFor site a -> WidgetFor site a
+var_ = liftParent "<var" "</var>"
 
-video_ :: (Monad m, Foldable t) => t Attribute -> WidgetT site m a -> WidgetT site m a
-video_ = liftParent H.video
+video_ :: Foldable t => t Attribute -> WidgetFor site a -> WidgetFor site a
+video_ = liftParent "<video" "</video>"
 
 
 
-area_ :: (Monad m, Foldable t) => t Attribute -> WidgetT site m ()
+area_ :: Foldable t => t Attribute -> WidgetFor site ()
 area_ = liftLeaf H.area
 
-base_ :: (Monad m, Foldable t) => t Attribute -> WidgetT site m ()
+base_ :: Foldable t => t Attribute -> WidgetFor site ()
 base_ = liftLeaf H.base
 
-br_ :: (Monad m, Foldable t) => t Attribute -> WidgetT site m ()
+br_ :: Foldable t => t Attribute -> WidgetFor site ()
 br_ = liftLeaf H.br
 
-col_ :: (Monad m, Foldable t) => t Attribute -> WidgetT site m ()
+col_ :: Foldable t => t Attribute -> WidgetFor site ()
 col_ = liftLeaf H.col
 
-embed_ :: (Monad m, Foldable t) => t Attribute -> WidgetT site m ()
+embed_ :: Foldable t => t Attribute -> WidgetFor site ()
 embed_ = liftLeaf H.embed
 
-hr_ :: (Monad m, Foldable t) => t Attribute -> WidgetT site m ()
+hr_ :: Foldable t => t Attribute -> WidgetFor site ()
 hr_ = liftLeaf H.hr
 
-img_ :: (Monad m, Foldable t) => t Attribute -> WidgetT site m ()
+img_ :: Foldable t => t Attribute -> WidgetFor site ()
 img_ = liftLeaf H.img
 
-input_ :: (Monad m, Foldable t) => t Attribute -> WidgetT site m ()
+input_ :: Foldable t => t Attribute -> WidgetFor site ()
 input_ = liftLeaf H.input
 
-keygen_ :: (Monad m, Foldable t) => t Attribute -> WidgetT site m ()
+keygen_ :: Foldable t => t Attribute -> WidgetFor site ()
 keygen_ = liftLeaf H.keygen
 
-link_ :: (Monad m, Foldable t) => t Attribute -> WidgetT site m ()
+link_ :: Foldable t => t Attribute -> WidgetFor site ()
 link_ = liftLeaf H.link
 
-menuitem_ :: (Monad m, Foldable t) => t Attribute -> WidgetT site m ()
+menuitem_ :: Foldable t => t Attribute -> WidgetFor site ()
 menuitem_ = liftLeaf H.menuitem
 
-meta_ :: (Monad m, Foldable t) => t Attribute -> WidgetT site m ()
+meta_ :: Foldable t => t Attribute -> WidgetFor site ()
 meta_ = liftLeaf H.meta
 
-param_ :: (Monad m, Foldable t) => t Attribute -> WidgetT site m ()
+param_ :: Foldable t => t Attribute -> WidgetFor site ()
 param_ = liftLeaf H.param
 
-source_ :: (Monad m, Foldable t) => t Attribute -> WidgetT site m ()
+source_ :: Foldable t => t Attribute -> WidgetFor site ()
 source_ = liftLeaf H.source
 
-track_ :: (Monad m, Foldable t) => t Attribute -> WidgetT site m ()
+track_ :: Foldable t => t Attribute -> WidgetFor site ()
 track_ = liftLeaf H.track
 
-wbr_ :: (Monad m, Foldable t) => t Attribute -> WidgetT site m ()
+wbr_ :: Foldable t => t Attribute -> WidgetFor site ()
 wbr_ = liftLeaf H.wbr
 
 accept_ :: AttributeValue -> Attribute
@@ -1118,16 +1132,54 @@ wrap_ = HA.wrap
 xmlns_ :: AttributeValue -> Attribute
 xmlns_ = HA.xmlns
 
-liftParent :: (Monad m, Foldable t) => (Html -> Html) -> t Attribute -> WidgetT site m a -> WidgetT site m a
-liftParent el attrs (WidgetT f) = WidgetT $ \hdata -> do
-  (a,gwd) <- f hdata
-  let Body bodyFunc = gwdBody gwd
-      combinedAttrs = fold attrs
-      newBodyFunc render =
-        el H.! combinedAttrs $ (bodyFunc render)
-  return (a,gwd { gwdBody = Body newBodyFunc })
+-----------------------------
+-- Internal functions below
+-----------------------------
 
-liftLeaf :: (Monad m, Foldable t) => Html -> t Attribute -> WidgetT site m ()
-liftLeaf el attrs = WidgetT $ const
-  (return ((),mempty { gwdBody = Body (const (el H.! (fold attrs)))}))
+content :: BI.ChoiceString -> BI.MarkupM ()
+content cs = BI.Content cs ()
+
+textFromChoiceString :: BI.ChoiceString -> TB.Builder
+textFromChoiceString x = BLZT.renderMarkupBuilder (BI.Content x ())
+
+fromChoiceString :: BI.ChoiceString -> BB.Builder
+fromChoiceString x = BLZU.renderMarkupBuilder (BI.Content x ())
+
+renderAttributeMarkup :: BI.MarkupM a -> BI.StaticString
+renderAttributeMarkup x = case go (id,mempty,mempty) x of
+  (sb,bb,tb) -> BI.StaticString
+    sb
+    (LB.toStrict (BB.toLazyByteString bb))
+    (LT.toStrict (TB.toLazyText tb))
+  where
+  go :: (String -> String,BB.Builder,TB.Builder) -> BI.MarkupM b -> (String -> String,BB.Builder,TB.Builder)
+  go (sb,bb,tb) (BI.AddAttribute _ key value h) =
+    go ( BI.getString key . BLZS.fromChoiceString value . ('"' :) . sb
+       , BB.byteString (BI.getUtf8ByteString key)
+           <> fromChoiceString value
+           <> BB.char7 '"'
+           <> bb
+       , TB.fromText (BI.getText key)
+           <> textFromChoiceString value
+           <> TB.singleton '"'
+           <> tb
+       ) h
+  go (sb,bb,tb) _ = (sb,bb,tb)
+
+liftParent :: Foldable t => BI.StaticString -> BI.StaticString -> t Attribute -> WidgetFor site a -> WidgetFor site a
+liftParent open close attrs inner = do
+  toWidget
+    ( BI.Append
+      (content (BI.Static open))
+      (BI.Append
+        (content (BI.Static (renderAttributeMarkup (BI.Empty () H.! fold attrs))))
+        (content (BI.Static (fromString ">")))
+      )
+    )
+  a <- inner
+  toWidget $ content (BI.Static close)
+  return a
+
+liftLeaf :: Foldable t => Html -> t Attribute -> WidgetFor site ()
+liftLeaf el attrs = toWidget (el H.! fold attrs)
 

@@ -38,3 +38,7 @@ docs/db/unthreat
 
 geolite-csv/data/large
 geolite-lmdb/data/large
+.ghc.environment.*
+example.hs
+example
+client_session_key.aes
