@@ -254,6 +254,7 @@ module Yesod.Elements
   , rel_
   , required_
   , reversed_
+  , role_
   , rows_
   , rowspan_
   , sandbox_
@@ -288,10 +289,9 @@ module Yesod.Elements
   ) where
 
 import Yesod.Core (toWidget)
-import Yesod.Core.Types (Body(..),GWData(..),WidgetFor(..),WidgetData(..))
+import Yesod.Core.Types (WidgetFor(..))
 import Text.Blaze.Html (Html,Attribute,AttributeValue)
 import Data.Foldable
-import Data.IORef (modifyIORef)
 import Data.String (fromString)
 import Data.Monoid
 import qualified Text.Blaze.Renderer.Utf8 as BLZU
@@ -1047,6 +1047,9 @@ required_ = HA.required
 
 reversed_ :: AttributeValue -> Attribute
 reversed_ = HA.reversed
+
+role_ :: AttributeValue -> Attribute
+role_ = HA.role
 
 rows_ :: AttributeValue -> Attribute
 rows_ = HA.rows
