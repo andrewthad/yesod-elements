@@ -1167,6 +1167,21 @@ renderAttributeMarkup x = case go (id,mempty,mempty) x of
            <> TB.singleton '"'
            <> tb
        ) h
+  go (sb,bb,tb) (BI.AddCustomAttribute key value h) =
+    go ( (' ' :) . BLZS.fromChoiceString key . ("=\"" ++) . BLZS.fromChoiceString value . ('"' :) . sb
+       , BB.char7 ' '
+           <> fromChoiceString key
+           <> BB.byteString "=\""
+           <> fromChoiceString value
+           <> BB.char7 '"'
+           <> bb
+       , TB.singleton ' '
+           <> textFromChoiceString key
+           <> TB.fromText "=\""
+           <> textFromChoiceString value
+           <> TB.singleton '"'
+           <> tb
+       ) h
   go (sb,bb,tb) _ = (sb,bb,tb)
 
 liftParent :: Foldable t => BI.StaticString -> BI.StaticString -> t Attribute -> WidgetFor site a -> WidgetFor site a
